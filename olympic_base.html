@@ -1,0 +1,401 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Olympic Host City Elections</title>
+    
+    <style>
+        
+        body {
+            font-family: "Arial";
+        }
+
+        text {
+            font-family: "Arial";
+        }
+        
+    </style>
+        
+    <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    
+    <script type="text/javascript">
+
+        var data; 
+        var year = "2010";
+
+        var filter = [];
+        
+        function getData(year) {
+            d3.selectAll("svg > *").remove();   // clear the SVG
+            d3.csv("olympics_"+year+".csv", function(d) {
+                data = d;
+                draw();
+            });
+        }
+        
+        var baseline, meridian, hScale, vScale, rScale;     // declare some global variables
+        
+        function draw() {
+            var target = d3.select("#hosts");
+            var targetWidth = +target.attr("width");
+            
+            var xAxis = 1050;
+            var yAxis = 50;
+
+            var axisData = [{"x": yAxis, "y": 50},{"x": yAxis, "y": xAxis}, {"x": yAxis + 1000, "y": xAxis}];
+
+            /* Define a function that will draw lines between the coordinates passed to it */       
+            var lineFunction = d3.svg.line()
+                         .x(function(d) { return d.x; })
+                         .y(function(d) { return d.y; })
+                         .interpolate("linear");
+
+            // Draw the axes
+            var axes = target.append("path")
+                            .attr("class","axes")
+                            .attr("d", lineFunction(axisData))
+                            .attr("fill", "none")
+                            .attr("stroke","black");
+
+            // Scale the x-axis
+            for(var i = 1; i < 11; i++) {
+                var iStr = i.toString();
+                target.append("text")
+                    .attr("class","xScale " + iStr)
+                    .attr("x",yAxis + (100 * i))
+                    .attr("y",xAxis + 15)
+                    .text(iStr);
+            }
+
+            // Scale the y-axis
+            for(var i = 1; i < 11; i++) {
+                var iStr = i.toString();
+                target.append("text")
+                    .attr("class","xScale " + iStr)
+                    .attr("x",yAxis - 15)
+                    .attr("y",xAxis - (100*i))
+                    .text(iStr);
+            }            
+
+            // Draw the horizontal lines that delineate each host city's position
+            target.selectAll("line.oPos").data(data).enter().append("line")
+                .attr("class", function(d) {
+                    return "oPos " + d["City"];
+                })
+                .attr("x1",yAxis)
+                .attr("x2",yAxis + 1000)
+                .attr("y1",function(d) {
+                    return (xAxis - (+d["Overall Score"] * 100));
+                })
+                .attr("y2",function(d) {
+                    return (xAxis - (+d["Overall Score"] * 100));
+                })
+                .attr("stroke","black")
+                .attr("stroke-weight",1)
+                .style("opacity",0.6);
+
+            // Add the name of each city above its respective line
+            target.selectAll("text.cityName").data(data).enter().append("text")
+                .attr("class", function(d) {
+                    return "cityName " + d["City"];
+                })
+                .attr("x", function(d) {
+                    return yAxis + 5;
+                })
+                .attr("y", function(d) {
+                    return (xAxis - 3 - (+d["Overall Score"] * 100));
+                })
+                .text(function(d) {
+                    return d["City"];
+                })
+            
+            // Draw all circles for the Gov't Support criterion
+            target.selectAll("circle.government").data(data).enter().append("circle")
+                    .attr("class", function(d) {
+                        return "government " + d["City"];
+                        })
+                    .attr("cx",function(d) {
+                        return (yAxis + (+d["Government Support (average)"] * 100));
+                        })
+                    .attr("cy",function(d) {
+                        return (xAxis - (+d["Overall Score"] * 100));
+                        })
+                    .attr("r",function(d) {
+                        return (+d["Government Support (weight)"] * 5);
+                        })
+                    .style("fill","red")
+                    .style("stroke","white")
+                    .style("opacity",0.6)
+                    .append("title").text(function(d) {
+                        return "Government Support" + "\n City: " + d["City"] + "\n Score: " + d["Government Support (average)"] + "\n Criterion Weight: " + d["Government Support (weight)"];
+                    });
+
+            // Draw all circles for the General Infrastructure criterion
+            target.selectAll("circle.infrastructure").data(data).enter().append("circle")
+                    .attr("class", function(d) {
+                        return "infrastructure " + d["City"];
+                        })
+                    .attr("cx",function(d) {
+                        return (yAxis + (+d["General Infrastructure (average)"] * 100));
+                        })
+                    .attr("cy",function(d) {
+                        return (xAxis - (+d["Overall Score"] * 100));
+                        })
+                    .attr("r",function(d) {
+                        return (+d["General Infrastructure (weight)"] * 5);
+                        })
+                    .style("fill","yellow")
+                    .style("stroke","white")
+                    .style("opacity",0.6)
+                    .append("title").text(function(d) {
+                        return "General Infrastructure" + "\n City: " + d["City"] + "\n Score: " + d["General Infrastructure (average)"] + "\n Criterion Weight: " + d["General Infrastructure (weight)"];
+                    });
+
+            // Draw all circles for the Sports Infrastructure criterion
+            target.selectAll("circle.sports").data(data).enter().append("circle")
+                    .attr("class", function(d) {
+                        return "sports " + d["City"];
+                        })
+                    .attr("cx",function(d) {
+                        return (yAxis + (+d["Sports Infrastructure (average)"] * 100));
+                        })
+                    .attr("cy",function(d) {
+                        return (xAxis - (+d["Overall Score"] * 100));
+                        })
+                    .attr("r",function(d) {
+                        return (+d["Sports Infrastructure (weight)"] * 5);
+                        })
+                    .style("fill","green")
+                    .style("stroke","white")
+                    .style("opacity",0.6)
+                    .append("title").text(function(d) {
+                        return "Sports Infrastructure" + "\n City: " + d["City"] + "\n Score: " + d["Sports Infrastructure (average)"] + "\n Criterion Weight: " + d["Sports Infrastructure (weight)"];
+                    });
+
+            // Draw all circles for the Olympic Village criterion
+            target.selectAll("circle.village").data(data).enter().append("circle")
+                    .attr("class", function(d) {
+                        return "village " + d["City"];
+                        })
+                    .attr("cx",function(d) {
+                        return (yAxis + (+d["Olympic Village (average)"] * 100));
+                        })
+                    .attr("cy",function(d) {
+                        return (xAxis - (+d["Overall Score"] * 100));
+                        })
+                    .attr("r",function(d) {
+                        return (+d["Olympic Village (weight)"] * 5);
+                        })
+                    .style("fill","blue")
+                    .style("stroke","white")
+                    .style("opacity",0.6)
+                    .append("title").text(function(d) {
+                        return "Olympic Village" + "\n City: " + d["City"] + "\n Score: " + d["Olympic Village (average)"] + "\n Criterion Weight: " + d["Olympic Village (weight)"];
+                    });
+
+            // Draw all circles for the Environment criterion
+            target.selectAll("circle.environment").data(data).enter().append("circle")
+                    .attr("class", function(d) {
+                        return "environment " + d["City"];
+                        })
+                    .attr("cx",function(d) {
+                        return (yAxis + (+d["Environmental Conditions (average)"] * 100));
+                        })
+                    .attr("cy",function(d) {
+                        return (xAxis - (+d["Overall Score"] * 100));
+                        })
+                    .attr("r",function(d) {
+                        return (+d["Environmental Conditions (weight)"] * 5);
+                        })
+                    .style("fill","purple")
+                    .style("stroke","white")
+                    .style("opacity",0.6)
+                    .append("title").text(function(d) {
+                        return "Enviromental Conditions" + "\n City: " + d["City"] + "\n Score: " + d["Enviromental Conditions (average)"] + "\n Criterion Weight: " + d["Enviromental Conditions (weight)"];
+                    });
+
+            // Draw all circles for the Accomodations criterion
+            target.selectAll("circle.accomodation").data(data).enter().append("circle")
+                    .attr("class", function(d) {
+                        return "accomodation " + d["City"];
+                        })
+                    .attr("cx",function(d) {
+                        return (yAxis + (+d["Accomodation (average)"] * 100));
+                        })
+                    .attr("cy",function(d) {
+                        return (xAxis - (+d["Overall Score"] * 100));
+                        })
+                    .attr("r",function(d) {
+                        return (+d["Accomodation (weight)"] * 5);
+                        })
+                    .style("fill","pink")
+                    .style("stroke","white")
+                    .style("opacity",0.6)
+                    .append("title").text(function(d) {
+                        return "Accomodation" + "\n City: " + d["City"] + "\n Score: " + d["Accomodation (average)"] + "\n Criterion Weight: " + d["Accomodation (weight)"];
+                    });
+
+            // Draw all circles for the Transportation criterion
+            target.selectAll("circle.transport").data(data).enter().append("circle")
+                    .attr("class", function(d) {
+                        return "transport " + d["City"];
+                        })
+                    .attr("cx",function(d) {
+                        return (yAxis + (+d["Transport (average)"] * 100));
+                        })
+                    .attr("cy",function(d) {
+                        return (xAxis - (+d["Overall Score"] * 100));
+                        })
+                    .attr("r",function(d) {
+                        return (+d["Transport (weight)"] * 5);
+                        })
+                    .style("fill","orange")
+                    .style("stroke","white")
+                    .style("opacity",0.6)
+                    .append("title").text(function(d) {
+                        return "Transportation" + "\n City: " + d["City"] + "\n Score: " + d["Transport (average)"] + "\n Criterion Weight: " + d["Transport (weight)"];
+                    });
+
+            // Draw all circles for the Security criterion
+            target.selectAll("circle.security").data(data).enter().append("circle")
+                    .attr("class", function(d) {
+                        return "security " + d["City"];
+                        })
+                    .attr("cx",function(d) {
+                        return (yAxis + (+d["Security (average)"] * 100));
+                        })
+                    .attr("cy",function(d) {
+                        return (xAxis - (+d["Overall Score"] * 100));
+                        })
+                    .attr("r",function(d) {
+                        return (+d["Security (weight)"] * 5);
+                        })
+                    .style("fill","grey")
+                    .style("stroke","white")
+                    .style("opacity",0.6)
+                    .append("title").text(function(d) {
+                        return "Security" + "\n City: " + d["City"] + "\n Score: " + d["Security (average)"] + "\n Criterion Weight: " + d["Security (weight)"];
+                    });
+
+            // Draw all circles for the Experience criterion
+            target.selectAll("circle.experience").data(data).enter().append("circle")
+                    .attr("class", function(d) {
+                        return "experience " + d["City"];
+                        })
+                    .attr("cx",function(d) {
+                        return (yAxis + (+d["Experience from Past Sporting Events (average)"] * 100));
+                        })
+                    .attr("cy",function(d) {
+                        return (xAxis - (+d["Overall Score"] * 100));
+                        })
+                    .attr("r",function(d) {
+                        return (+d["Experience from Past Sporting Events (weight)"] * 5);
+                        })
+                    .style("fill","cyan")
+                    .style("stroke","white")
+                    .style("opacity",0.6)
+                    .append("title").text(function(d) {
+                        return "Experience from Past Sporting Events" + "\n City: " + d["City"] + "\n Score: " + d["Experience from Past Sporting Events (average)"] + "\n Criterion Weight: " + d["Experience from Past Sporting Events (weight)"];
+                    });
+
+            // Draw all circles for the Finance criterion
+            target.selectAll("circle.finance").data(data).enter().append("circle")
+                    .attr("class", function(d) {
+                        return "finance " + d["City"];
+                        })
+                    .attr("cx",function(d) {
+                        return (yAxis + (+d["Finance (average)"] * 100));
+                        })
+                    .attr("cy",function(d) {
+                        return (xAxis - (+d["Overall Score"] * 100));
+                        })
+                    .attr("r",function(d) {
+                        return (+d["Finance (weight)"] * 5);
+                        })
+                    .style("fill","magenta")
+                    .style("stroke","white")
+                    .style("opacity",0.6)
+                    .append("title").text(function(d) {
+                        return "Finance" + "\n City: " + d["City"] + "\n Score: " + d["Finance (average)"] + "\n Criterion Weight: " + d["Finance (weight)"];
+                    });
+
+            // Draw all circles for the General Concept criterion
+            target.selectAll("circle.concept").data(data).enter().append("circle")
+                    .attr("class", function(d) {
+                        return "concept " + d["City"];
+                        })
+                    .attr("cx",function(d) {
+                        return (yAxis + (+d["General Concept (average)"] * 100));
+                        })
+                    .attr("cy",function(d) {
+                        return (xAxis - (+d["Overall Score"] * 100));
+                        })
+                    .attr("r",function(d) {
+                        return (+d["General Concept (weight)"] * 5);
+                        })
+                    .style("fill","brown")
+                    .style("stroke","white")
+                    .style("opacity",0.6)
+                    .append("title").text(function(d) {
+                        return "General Concept" + "\n City: " + d["City"] + "\n Score: " + d["General Concept (average)"] + "\n Criterion Weight: " + d["General Concept (weight)"];
+                    });
+
+        }
+
+        function pushFilter(element,term) {
+            var e = d3.select(element)[0][0];
+            if(e.className) {
+                d3.select(element).attr("class","").text("Filter");
+                var ind = filter.indexOf(term);
+                filter.splice(ind,1);
+            }
+            else {
+                d3.select(element).attr("class","clicked").text("Remove filter");
+                filter.push(term);
+            }
+            filterCriteria();
+        }
+
+        function filterCriteria() {
+            if(filter.length > 0) {
+               d3.selectAll("circle").style("opacity",0.1);
+                for(var i = 0; i < filter.length; i++) {
+                    var c = 'circle.' + filter[i];
+                    d3.selectAll(c).transition(750).style("opacity",1.0);
+                } 
+            }
+            else {
+                getData(2012);
+            }
+        }
+        
+    </script>
+    
+</head>
+<body onload="getData(2012)">
+
+    <h3 style="font-family:Arial;">Olympic Host City Elections</h3>
+    <svg id="hosts" width="1100" height="1100"></svg>
+    
+    <div id="controls">
+            <div class="filter criterion">
+                <!-- Add the rest of the filters and make this the key, not just buttons -->
+                <p>Select criteria by which to filter:</p>
+                <ul>
+                    <li>Government Support <button onClick="pushFilter(this,'government')">Filter</button></li>
+                    <li>General Infrastructure <button onClick="pushFilter(this,'infrastructure')">Filter</button></li>
+                    <li>Olympic Village <button onClick="pushFilter(this,'village')">Filter</button></li>
+                    <li>Environmental Conditions and Impact <button onClick="pushFilter(this,'environment')">Filter</button></li>
+                    <li>Accomodation <button onClick="pushFilter(this,'accomodation')">Filter</button></li>
+                    <li>Transportation <button onClick="pushFilter(this,'transport')">Filter</button></li>
+                    <li>Security <button onClick="pushFilter(this,'security')">Filter</button></li>
+                    <li>Experience from Past Sporting Events <button onClick="pushFilter(this,'experience')">Filter</button></li>
+                    <li>Finanace <button onClick="pushFilter(this,'finance')">Filter</button></li>
+                    <li>General Concept <button onClick="pushFilter(this,'concept')">Filter</button></li>
+                </ul> 
+            </div>
+    </div>
+
+</body>
+</html>
